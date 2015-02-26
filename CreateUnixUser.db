@@ -1,0 +1,37 @@
+
+# Comment
+Polling
+Resizeable
+AlwaysOnTop
+XCoordinate c
+YCoordinate 0
+Title Création d'utilisateur
+Label Création d'un utilisateur sur une machine de la plateforme
+n
+Label UserID
+s 51
+E ____
+NewLine
+Label Login Name
+s 12
+E __________
+n
+Label Prénom
+s 44
+E _________________________
+n
+Label NOM
+s 67
+E _________________________
+B Rechercher, getu.bat %EDIT03% %EDIT00%
+n
+Label Mot de passe
+HiddenEdit __________________
+n
+n
+s 65
+Button OK_______
+s 90
+Button Annuler__
+n
+
