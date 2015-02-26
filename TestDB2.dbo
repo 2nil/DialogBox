@@ -1,0 +1,48 @@
+Outfile toto.txt
+# Comment
+Resizeable
+AlwaysOnTop
+XCoordinate c
+YCoordinate c
+Width 1280
+Height 6000
+Title Création d'utilisateur
+Label Création d'un utilisateur sur une machine de la plateforme
+n
+Label UserID
+s 53
+E _             
+NewLine
+Label Login Name
+s 14
+E __________
+n
+Label Prénom
+s 46
+E _________________________
+n
+Label Nom
+s 72
+E _________________________
+S 80
+B Rechercher, geted.bat %EDIT00% %EDIT03%
+n
+Label Mot de passe
+MaskedEdit __________________
+n
+La "TotoTututututu Ttatatatat"
+Button OK_______, DialogBox -x c -y c -t "Un dialogue dans le dialogue" -s 30 -l "Incroyable non !!" -n60 -s 40 -b "OK_____"
+s 90
+Button Annuler__
+n
+
+b [-1-]
+s 0
+b [-2-]
+n
+n 100
+b [-3-]
+n 90
+b [-4-]
+
+QuitAction, "cmd  \/C dir&pause"

@@ -1,0 +1,36 @@
+AlwayOnTop
+# Comment
+Polling
+Resizeable
+OutFileName db.result
+XCoordinate c
+YCoordinate c
+#W 320
+#H 420
+Title Modification
+Label Modifier quoi
+n
+Label Création d'un utilisateur sur une machine de la plateforme
+NewLine
+Label Executer
+DropList Fenêtre,Réduite,Agrandie,Peut-être,Encore,Bien que ...
+NewLine
+Label Bitmap
+EditText icons\aasilo__
+EditText $toto toto____
+NewLine
+bu Toto
+CheckBox MyCheckBox1
+la toto
+bu toto
+NewLine
+newline
+Button OK_____, [Exit]
+Button OK2, cmd /C dir&pause
+Space 90
+Button Annuler, DialogBox -l %EDIT01% -n -b __OK__
+#Sp 882
+Label Pourquoi
+b Encore
+#QuitAction [Confirm]
+
