@@ -1,5 +1,5 @@
 
-#Polling
+Polling
 YPosition 300
 W 425
 Height 162
@@ -24,7 +24,7 @@ Newline 20
 
 Check Films classiques vers D:\Backup
 Check Lecture et musique vers D:\Backup
-Newline 30
+Newline 37
 
 Space 110
 J DBPATH=/cygdrive/e/Documents/home/DialogBox

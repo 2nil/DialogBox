@@ -30,6 +30,21 @@ char *namedvar[6*NOBJECT];
 #define POS_VALUE 2
 #define POS_DEFAULT POS_CENTER
 
+
+#ifndef max
+#define max(a,b) \
+   ({ __typeof__ (a) _a = (a); \
+       __typeof__ (b) _b = (b); \
+     _a > _b ? _a : _b; })
+#endif
+
+#ifndef min
+#define min(a,b) \
+   ({ __typeof__ (a) _a = (a); \
+       __typeof__ (b) _b = (b); \
+     _a < _b ? _a : _b; })
+#endif
+
 static char *AppTitle=NULL;
 static HWND g_hwnd;
 static HINSTANCE g_hinst;
@@ -484,7 +499,7 @@ LONG APIENTRY MainWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       SetWindowLong(g_hwnd, GWL_STYLE, WS_VSCROLL | WS_HSCROLL | DlgStyle);
       // Met en place les ascenseurs
       const SIZE sz={ wmax, hmax };
-      SCROLLINFO si={ sizeof(SCROLLINFO), SIF_PAGE|SIF_POS|SIF_RANGE, 1, sz.cx, sz.cx, 1, 0 };
+      SCROLLINFO si={ sizeof(SCROLLINFO), SIF_PAGE|SIF_POS|SIF_RANGE, 1, sz.cx, (UINT)sz.cx, 1, 0 };
       SetScrollInfo(hwnd, SB_HORZ, &si, FALSE);
       si.nMax=sz.cy; si.nPage=sz.cy;
       SetScrollInfo(hwnd, SB_VERT, &si, FALSE);
@@ -787,7 +802,7 @@ HWND AddObject(DWORD ExStyle, const char *ClassName, char *WindowName, DWORD Sty
   hw=CreateWindowEx(ExStyle, ClassName, wn, Style | WS_VISIBLE | WS_CHILD,
    obj_x, obj_y, obj_w, obj_h,
    g_hwnd,
-   (HMENU)id,
+   (HMENU)(long long)id,
    g_hinst,
    (LPVOID)0);
 
@@ -1115,5 +1130,4 @@ void ReloadDlgFile()
 {
   ReadDlgFile(PollFileName);
 }
-
 
