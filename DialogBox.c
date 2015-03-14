@@ -25,9 +25,10 @@ char **GetArgs(int *pa_argc)
   return pa_argv;
 }
 
-char ishort_options[] = "arj:f:po:i:x:y:w:h:t:l:b:c:e:m:u:v:d:s:n::q:";
+char ishort_options[] = "akjr:f:po:i:x:y:w:h:t:l:b:c:e:m:u:v:d:s:n::q:";
 static struct ioption ilong_options[] = {
  {"alwaysontop",   ino_argument,       0,  'a' },
+ {"scroll",        ino_argument,       0,  'k' },
  {"injectvar",     irequired_argument, 0,  'j' },
  {"resizable",     ino_argument,       0,  'r' },
  {"file",          irequired_argument, 0,  'f' },
@@ -51,7 +52,7 @@ static struct ioption ilong_options[] = {
  {"newline",       ioptional_argument, 0,  'n' },
  {"quitaction",    irequired_argument, 0,  'q' },
  /* Reste :
- j, k, g : GraphicObject, z : Zbuffered3DObject
+ g : GraphicObject, z : Zbuffered3DObject
  */  
  {0,               0,                 0,   0  }
 };

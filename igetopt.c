@@ -1,4 +1,4 @@
-/* GeToPt iNsenSible à la casse modifié d'après le code de Ludvik Jerabek */
+/* GeToPt iNsenSible Ã  la casse modifiÃ© d'aprÃ¨s le code de Ludvik Jerabek */
 /* Toutes les macros, fonctions et variables du getopt et getopt_long standard commencent par i ou I, selon leur nom original */
 
 /* CaSE uNsenSitive GeToPt modified from Ludvik Jerabek's code */

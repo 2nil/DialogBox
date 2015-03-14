@@ -5,7 +5,7 @@
 #include <windows.h>
 
 
-// Structure qui permet d'établir la correspondance entre chaine et UINT
+// Structure qui permet d'Ã©tablir la correspondance entre chaine et UINT
 struct sUtype {
   UINT uT;
   const char *suT;
@@ -76,7 +76,7 @@ UINT str2uT(char *s)
   return 0;
 }
 
-// Point d'entrée
+// Point d'entrÃ©e
 // msgbox [text[, caption[, uType[, uType...]]]]
 int MsgBox(HWND hwnd, LPSTR lpCmdLine)
 {
@@ -110,7 +110,7 @@ int MsgBox(HWND hwnd, LPSTR lpCmdLine)
         break;
       }
 
-      // L'anti-slash sert au retour charriot et à la virgule si on veut l'inclure dans un message
+      // L'anti-slash sert au retour charriot et Ã  la virgule si on veut l'inclure dans un message
       if(*pLpCmdLine == '\\') {
         if(*(pLpCmdLine+1) == 'n') { text[i]='\n'; pLpCmdLine++; }
         else if(*(pLpCmdLine+1) == ',') { text[i]=','; pLpCmdLine++; }

@@ -29,7 +29,7 @@ endif
 #CPPFLAGS += -D_UNICODE -DUNICODE
 # Nécessaire pour l'unicode avec mingw non 64 bits
 #CFLAGS += -finput-charset=ISO-8859-1 -D ISO_8859_1_CHARSET
-CPPFLAGS += -I. -D_WIN32_WINNT=0x600 -D_WIN32_IE=0x600
+CPPFLAGS += -I. #-D_WIN32_WINNT=0x600 -D_WIN32_IE=0x600
 CFLAGS +=-g -Wall
 LDFLAGS=-mwindows
 LDLIBS += -static -lgdi32 -lole32 -lcomdlg32 -lcomctl32

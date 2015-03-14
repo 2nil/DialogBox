@@ -1,7 +1,8 @@
 
-Polling
+#Polling
 YPosition 300
-Height 178
+W 425
+Height 162
 Title Que voulez-vous sauvegarder par RSYNC ?
 J CHECK00=1
 J CHECK01=1

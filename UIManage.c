@@ -14,13 +14,13 @@
 #include "igetopt.h"
 #define CLASSNAME "DialogBoxProgRootWindowClass"
 
-/* On peut avoir un maximum de 100 objets d'un même type */
+/* On peut avoir un maximum de 100 objets d'un mÃªme type */
 #define NOBJECT 100
 #define BUTTON_START NOBJECT
-#define LABEL_START	2*NOBJECT
+#define LABEL_START  2*NOBJECT
 #define EDIT_START 3*NOBJECT
-#define COMBO_START	4*NOBJECT
-#define CHECK_START	5*NOBJECT
+#define COMBO_START  4*NOBJECT
+#define CHECK_START  5*NOBJECT
 
 char *namedvar[6*NOBJECT];
 
@@ -51,8 +51,9 @@ char *InFileName=NULL;
 int defpb;
 char *buttoncb[NOBJECT];
 char *QuitAction=NULL;
-/* Par défaut la fenêtre de dialogue n'est pas retaillable */
-DWORD DlgStyle=WS_DLGFRAME|WS_SYSMENU;
+/* Par dÃ©faut la fenÃªtre de dialogue n'est pas retaillable */
+DWORD DlgStyle=WS_CAPTION|WS_SYSMENU;
+int scrollable=0;
   
 
 /*  Affiche l'erreur windows aussi sur stderr */
@@ -83,7 +84,7 @@ void InitDlg()
     }
   }
 
-  DlgStyle=WS_DLGFRAME|WS_SYSMENU;
+  DlgStyle=WS_CAPTION|WS_SYSMENU;
   pos_x=POS_DEFAULT;
   win_x=-1;
   pos_y=POS_DEFAULT;
@@ -257,8 +258,56 @@ void SetEnvDlgState()
   DelObjList(objname, objval, nobj);
 }
 
+
+int putenv_from_file(FILE *fp)
+{
+  char s[1024], *p;
+  int pe=0;
+  for (;;) {
+    if (fgets(s, 1024, fp) ==NULL) break;
+    p=&s[strlen(s)-1];
+    while(*p && isspace(*p)) { *p='\0'; p--; }
+    p=s;
+    while(*p && isspace(*p)) p++;
+    if (strlen(p) > 1 && isalpha(p[0]) && strchr(&p[1], '=')) {
+//      printf("[%s]\n", s);
+      putenv(p);
+      pe=1;
+    }
+  }
+
+  return pe;
+}
+
+void DoPollFile(HWND hwnd)
+{
+  struct stat st;
+
+  if (stat(PollFileName, &st) == 0) {
+    static time_t prev_mtime=-1;
+
+    if (prev_mtime == -1) prev_mtime=st.st_mtime;
+
+    if (prev_mtime != st.st_mtime) {
+      prev_mtime=st.st_mtime;
+
+      if (hwnd) {
+        KillTimer(hwnd, PollTimer);
+        DestroyWindow(hwnd);
+      }
+    }
+  }
+}
+
+void WEPE(char *s)
+{
+    FILE *fp=_popen(s, "r");
+    if (putenv_from_file(fp)) DoPollFile(g_hwnd);
+    _pclose(fp);
+}
+
 /* Si setvar alors EnvDlgState des objets sinon PrintDlgState */
-/* Et Run action après ExpandEnvironment */
+/* Et Run action aprÃ¨s ExpandEnvironment */
 void RunAction(char *action, int SetEnv)
 {
   if (strncasecmp(action, "[msgbox]", 8) == 0) {
@@ -280,6 +329,7 @@ void RunAction(char *action, int SetEnv)
     ExpandEnvironmentStrings(action, dst_action, MAX_LINE);
   //  puts(dst_action); fflush(stdout);
     WinExec(dst_action, SW_SHOW);
+//    WEPE(dst_action);
   }
 }
 
@@ -297,26 +347,6 @@ void ConfirmQuit(HWND hwnd)
   DestroyWindow(hwnd);
 }
 
-
-void DoPollFile(HWND hwnd)
-{
-	struct stat st;
-
-  if (stat(PollFileName, &st) == 0) {
-    static time_t prev_mtime=-1;
-
-    if (prev_mtime == -1) prev_mtime=st.st_mtime;
-
-    if (prev_mtime != st.st_mtime) {
-      prev_mtime=st.st_mtime;
-
-      if (hwnd) {
-        KillTimer(hwnd, PollTimer);
-        DestroyWindow(hwnd);
-      }
-    }
-  }
-}
 
 int CheckButtonCB(int id)
 {
@@ -424,17 +454,17 @@ LONG APIENTRY MainWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       h=p.y-r.top+1;
     }
 
-    // Taille de fenêtre prédéfini ?
+    // Taille de fenÃªtre prÃ©dÃ©fini ?
     if (win_w_fixed) w=win_w_fixed;
     if (win_h_fixed) h=win_h_fixed;
 
-    // taille de l'écran
+    // taille de l'Ã©cran
     RECT rc;
     SystemParametersInfo(SPI_GETWORKAREA, 0, &rc, 0);
     int ws=rc.right-rc.left;
     int hs=rc.bottom-rc.top;
 
-    // Pour ne pas dépasser la taille de l'écran
+    // Pour ne pas dÃ©passer la taille de l'Ã©cran
     if (w > ws) w=ws;
     if (h > hs) h=hs;
 
@@ -450,14 +480,17 @@ LONG APIENTRY MainWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     MoveWindow(hwnd, x, y, w, h, TRUE);
 
-    // Met en place les ascenseurs
-    const SIZE sz={ wmax, hmax };
-    SCROLLINFO si={ sizeof(SCROLLINFO), SIF_PAGE|SIF_POS|SIF_RANGE, 1, sz.cx, sz.cx, 1, 0 };
-    SetScrollInfo(hwnd, SB_HORZ, &si, FALSE);
-    si.nMax=sz.cy; si.nPage=sz.cy;
-    SetScrollInfo(hwnd, SB_VERT, &si, FALSE);
+    if (scrollable) {
+      SetWindowLong(g_hwnd, GWL_STYLE, WS_VSCROLL | WS_HSCROLL | DlgStyle);
+      // Met en place les ascenseurs
+      const SIZE sz={ wmax, hmax };
+      SCROLLINFO si={ sizeof(SCROLLINFO), SIF_PAGE|SIF_POS|SIF_RANGE, 1, sz.cx, sz.cx, 1, 0 };
+      SetScrollInfo(hwnd, SB_HORZ, &si, FALSE);
+      si.nMax=sz.cy; si.nPage=sz.cy;
+      SetScrollInfo(hwnd, SB_VERT, &si, FALSE);
+    } else SetWindowLong(g_hwnd, GWL_STYLE, DlgStyle);
 
-    // Démarrage de la scrutation du fichier de dialogue
+    // DÃ©marrage de la scrutation du fichier de dialogue
     if (PollFile) PollTimer=SetTimer(hwnd, 1, 400, NULL);
   } return 0;
   case WM_HSCROLL:
@@ -468,7 +501,7 @@ LONG APIENTRY MainWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return 0;
   case WM_SIZE:
     if(wParam != SIZE_RESTORED && wParam != SIZE_MAXIMIZED) return 0;
-
+    if (scrollable) {
     SCROLLINFO si;
     si.cbSize=sizeof(SCROLLINFO);
     int bar[2];
@@ -488,6 +521,7 @@ LONG APIENTRY MainWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       const int maxScrollPos=si.nMax - (page[i] - 1);
       const BOOL needToScroll=(si.nPos != si.nMin && si.nPos == maxScrollPos) || (wParam == SIZE_MAXIMIZED);
       if (needToScroll) ScrollClient(hwnd, bar[i], si.nPos);
+    }
     }
     return 0;
   case WM_TIMER:
@@ -561,9 +595,11 @@ int CreateDlg(HINSTANCE hInstance)
     une=0;
   }
 
-    
   /*  Create Main Window */
-  g_hwnd=CreateWindowEx(0, CLASSNAME, AppTitle, WS_VSCROLL | WS_HSCROLL | DlgStyle,
+  DWORD sty;
+  if (scrollable) sty=WS_VSCROLL | WS_HSCROLL | DlgStyle;
+  else sty=DlgStyle;
+  g_hwnd=CreateWindowEx(0, CLASSNAME, AppTitle, sty,
     CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
     (HWND)NULL, (HMENU)NULL, hInstance, (LPVOID)NULL);
 
@@ -780,7 +816,7 @@ char *SetVarName(char *s, int idx)
 //    printf("nv %s\n", namedvar[idx]); fflush(stdout);
   }
 
-  /* Enléve les espaces ainsi que les guillements ou apostrophes en trop */
+  /* EnlÃ©ve les espaces ainsi que les guillements ou apostrophes en trop */
   while (isspace(s[i])) i++;
   if (s[i] == '"' || s[i] == '\'') i++;
   s=&s[i];
@@ -788,7 +824,7 @@ char *SetVarName(char *s, int idx)
   i=strlen(s);
   if (s[i-1] == '"' || s[i-1] == '\'') s[i-1]='\0';
 
-  /* Développe les variable d'env qui pourrait servir */
+  /* DÃ©veloppe les variable d'env qui pourrait servir */
   ne=ExpandEnvironmentStrings(s, exp, 0);
   if (exp) free(exp);
   exp=(char *)malloc(ne);
@@ -839,6 +875,13 @@ void AddEdit(char *es)
   char *estr;
 
   estr=SetVarName(es, EDIT_START+ecount);
+  char en[]="EDIT00", *ev;
+
+  en[5]='0'+rcount;
+  ev=getenv(en);
+  if (ev) estr=ev;
+//  printf("estr %s\n", estr); fflush(stdout);
+  
   hw=AddObject(WS_EX_CLIENTEDGE, "EDIT", estr, WS_TABSTOP|ES_AUTOHSCROLL|ES_AUTOVSCROLL|ES_MULTILINE|ES_WANTRETURN, EDIT_START+ecount);
   Resize(hw, estr, EDIT);
   ecount++;
@@ -884,7 +927,6 @@ void AddCheck(char *rs)
   int checked=0;
   char en[]="CHECK00", *ev;
 
-//  if ((*rs == 'x' || *rs == 'X') && rs[1] == ' ') { rs += 2; checked=1; }
   en[6]='0'+rcount;
   ev=getenv(en);
   if (ev && *ev == '1') checked=1;
@@ -953,24 +995,24 @@ void AddMultiLineLabel(const char *s)
 void Usage(const char *fmt, ...)
 {
   char s[]="\
-a : Fenêtre toujours au-dessus.\n\
-r : Fenêtre du dialogue, retaillable ou pas.\n\
-f nom_fichier : Lit le fichier de description de dialogue, indiqué.\n\
-p : Scrute les changement sur le fichier de description de dialogue et met à jour en fonction.\n\
+a : FenÃªtre toujours au-dessus.\n\
+r : FenÃªtre du dialogue, retaillable ou pas.\n\
+f nom_fichier : Lit le fichier de description de dialogue, indiquÃ©.\n\
+p : Scrute les changement sur le fichier de description de dialogue et met Ã  jour en fonction.\n\
 o : Envoie la valeur des objets dans un fichier en sortie du dialogue.\n\
-x valnum : Fixe les coordonnée en X du dialogue.\n\
-y valnum : Fixe les coordonnée en Y du dialogue.\n\
+x valnum : Fixe les coordonnÃ©e en X du dialogue.\n\
+y valnum : Fixe les coordonnÃ©e en Y du dialogue.\n\
 w valnum : Fixe la largeur du dialogue.\n\
 h valnum : Fixe la hauteur du dialogue.\n\
 t titre : Modifie le titre du dialogue.\n\
-b label_bouton, action_bouton : Ajoute un bouton et l'action qui lui correspond (séparés par une virgule).\n\
+b label_bouton, action_bouton : Ajoute un bouton et l'action qui lui correspond (sÃ©parÃ©s par une virgule).\n\
 c label_check : Ajoute un check box.\n\
 l label : Ajoute un label.\n\
-e valtext : Ajoute une zone de saisie texte ('_' à un rôle particulier).\n\
-m valtext : Ajoute une zone de saisie masqué (mot de passe)\n\
+e valtext : Ajoute une zone de saisie texte ('_' Ã  un rÃ´le particulier).\n\
+m valtext : Ajoute une zone de saisie masquÃ© (mot de passe)\n\
 d valtext[,valtext, ...] : Ajoute une drop list (combo).\n\
-s valnum : Décale de n pixels vers la droite.\n\
-n : Passe à la ligne suivante.\n\
+s valnum : DÃ©cale de n pixels vers la droite.\n\
+n : Passe Ã  la ligne suivante.\n\
 q action : Modifie l'action de sortie du dialogue, le mot clef [Confirm] demande confirmation avant de sortir.";
 
 
@@ -993,30 +1035,33 @@ q action : Modifie l'action de sortie du dialogue, le mot clef [Confirm] demande
   puts(s); fflush(stdout);
 }
 
+#define prt
+//printf("iopt %c, oarg %s, ilong_opt %s\n", iopt, oarg, ilong_opt);fflush(stdout);
 int DoCmd(char iopt, char *oarg, char *ilong_opt)
 {
   switch (iopt) {
-  case 'a': case 'A': SetAlwaysOnTop(); break;
-  case 'r': case 'R': SetDlgStyle(WS_OVERLAPPEDWINDOW);	break;
-  case 'f': case 'F': ReadDlgFile(oarg); break;
-  case 'p': case 'P': SetPolling(); break;
-  case 'o': case 'O': SetOutFile(oarg); break;
-  case 'j': case 'J': putenv(oarg); break;
-  case 'i': case 'I': SetInFile(oarg); break;
-  case 'x': case 'X': SetWinX(oarg); break;
-  case 'y': case 'Y': SetWinY(oarg); break;
-  case 'w': case 'W': SetWidth(oarg); break;
-  case 'h': case 'H': SetHeight(oarg); break;
-  case 't': case 'T': SetTitle(oarg); break;
-  case 'l': case 'L': AddLabel(oarg); break;
-  case 'b': case 'B': AddButton(oarg); break;
-  case 'c': case 'C': AddCheck(oarg); break;
-  case 'e': case 'E': AddEdit(oarg); break;
-  case 'm': case 'M': MaskedEdit(oarg); break;
-  case 'd': case 'D': AddDropDown(oarg); break;
-  case 's': case 'S': AddSpace(oarg); break;
-  case 'n': case 'N': AddNewLine(oarg); break;
-  case 'q': case 'Q': SetQuitAction(oarg); break;
+  case 'a': case 'A': SetAlwaysOnTop(); prt; break;
+  case 'k': case 'K': scrollable=1; prt; break;
+  case 'r': case 'R': SetDlgStyle(WS_OVERLAPPEDWINDOW);  prt; break;
+  case 'f': case 'F': ReadDlgFile(oarg); prt; break;
+  case 'p': case 'P': SetPolling(); prt; break;
+  case 'o': case 'O': SetOutFile(oarg); prt; break;
+  case 'j': case 'J': putenv(oarg); prt; break;
+  case 'i': case 'I': SetInFile(oarg); prt; break;
+  case 'x': case 'X': SetWinX(oarg); prt; break;
+  case 'y': case 'Y': SetWinY(oarg); prt; break;
+  case 'w': case 'W': SetWidth(oarg); prt; break;
+  case 'h': case 'H': SetHeight(oarg); prt; break;
+  case 't': case 'T': SetTitle(oarg); prt; break;
+  case 'l': case 'L': AddLabel(oarg); prt; break;
+  case 'b': case 'B': AddButton(oarg); prt; break;
+  case 'c': case 'C': AddCheck(oarg); prt; break;
+  case 'e': case 'E': AddEdit(oarg); prt; break;
+  case 'm': case 'M': MaskedEdit(oarg); prt; break;
+  case 'd': case 'D': AddDropDown(oarg); prt; break;
+  case 's': case 'S': AddSpace(oarg); prt; break;
+  case 'n': case 'N': AddNewLine(oarg); prt; break;
+  case 'q': case 'Q': SetQuitAction(oarg); prt; break;
   case '#': break;                              // Commentaire
   case '?':                                     // Aide
   default :
@@ -1048,7 +1093,7 @@ void ReadDlgFile(char *fn)
       if (line[strlen(line)-1] == '\n') line[strlen(line)-1]='\0';
 
       if (line[0]) {
-        /* Enléve les caracteres, non nul et non espace */
+        /* EnlÃ©ve les caracteres, non nul et non espace */
         p=&line[1];
         while (*p && !isspace(*p)) p++;
         /* Enleve les caracteres espace */
@@ -1059,7 +1104,7 @@ void ReadDlgFile(char *fn)
 
     fclose(fp);
 
-    /* Pour éviter l'étreinte mortelle entre le free de PollFileName et le strdup de fn */
+    /* Pour Ã©viter l'Ã©treinte mortelle entre le free de PollFileName et le strdup de fn */
     respfn=strdup(fn);
     free(PollFileName);
     PollFileName=respfn;
