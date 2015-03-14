@@ -1,0 +1,23 @@
+#Outfile toto.txt
+# Comment
+Polling
+Resizeable
+#AlwaysOnTop
+#XCoordinate c
+#YCoordinate c
+X 200
+Width 256
+Height 142
+Title Test GEPE
+Label Affichage de texte
+JotVar EDIT00=tototutu
+E tototuturururiri
+N
+C TOTO__
+NewLine
+Button OK_______, DialogBox -r -x c -y c -t "Un dialogue dans le dialogue" -s 30 -l "Incroyable non !!" -n60 -s 40 -b "OK_____"
+Button Script, [MsgBox] Hello, Goodbye, OKCANCEL
+s 90
+Button Annuler__
+
+#QuitAction, "cmd  \/C dir&pause"
